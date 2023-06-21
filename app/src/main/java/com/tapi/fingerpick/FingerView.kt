@@ -23,6 +23,7 @@ const val DEFAULT_TIME = 100L
 const val TIME_END = 400L
 const val STEP_TIME = 10L
 const val DEFAULT_STROKE = 20f
+const val MAX_STROKE = 100f
 const val DEFAULT_COLOR = 0xFF20C232.toInt()
 
 class FingerView @JvmOverloads constructor(
@@ -92,7 +93,7 @@ class FingerView @JvmOverloads constructor(
     }
 
     fun start() {
-        if (listAxis.size > 1) {
+        if (listAxis.size > 1 && !isStarting) {
             isStarting = true
             handler.post(runnable)
         }
@@ -106,7 +107,7 @@ class FingerView @JvmOverloads constructor(
         } else {
             if (listAxis.isNotEmpty()) {
                 index = Random.nextInt(listAxis.size)
-                context.vibrate(duration = 50L, amplitude = 100)
+                context.vibrate(duration = 20L, amplitude = 100)
                 invalidate()
                 handler.postDelayed(runnable, delayTime)
             }
@@ -165,7 +166,7 @@ class FingerView @JvmOverloads constructor(
 
             addUpdateListener {
                 val value = it.animatedValue as Float
-                stroke = convertValue(0f, 1f, DEFAULT_STROKE, 50f, value)
+                stroke = convertValue(0f, 1f, DEFAULT_STROKE, MAX_STROKE, value)
                 resultColor = 0xFFEB5757.toInt()
                 invalidate()
             }
