@@ -6,7 +6,11 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.Build
 import android.os.Handler
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
@@ -19,6 +23,7 @@ const val DEFAULT_TIME = 100L
 const val TIME_END = 400L
 const val STEP_TIME = 10L
 const val DEFAULT_STROKE = 20f
+const val DEFAULT_COLOR = 0xFF20C232.toInt()
 
 class FingerView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -37,7 +42,7 @@ class FingerView @JvmOverloads constructor(
     private val paintStroke = Paint().apply {
         style = Paint.Style.STROKE
         strokeWidth = 10f
-        color = 0xFF424444.toInt()
+        color = DEFAULT_COLOR
         isAntiAlias = true
     }
 
@@ -53,7 +58,7 @@ class FingerView @JvmOverloads constructor(
     var index = 0
     var isStarting = false
     var stroke = DEFAULT_STROKE
-    var resultColor = 0xFF424444.toInt()
+    var resultColor = DEFAULT_COLOR
 
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -97,9 +102,11 @@ class FingerView @JvmOverloads constructor(
         if (delayTime >= TIME_END) {
             handler.removeCallbacks(runnable)
             startAnimation()
+            context.vibrate(duration = 1500L)
         } else {
             if (listAxis.isNotEmpty()) {
                 index = Random.nextInt(listAxis.size)
+                context.vibrate(duration = 50L, amplitude = 100)
                 invalidate()
                 handler.postDelayed(runnable, delayTime)
             }
@@ -142,7 +149,7 @@ class FingerView @JvmOverloads constructor(
             isStarting = false
             delayTime = DEFAULT_TIME
             stroke = DEFAULT_STROKE
-            resultColor = 0xFF424444.toInt()
+            resultColor = DEFAULT_COLOR
             animate?.cancel()
             animate = null
         }
@@ -229,5 +236,23 @@ class FingerView @JvmOverloads constructor(
 
     fun convertValue(min1: Float, max1: Float, min2: Float, max2: Float, value: Float): Float {
         return ((value - min1) * ((max2 - min2) / (max1 - min1)) + min2)
+    }
+}
+
+fun Context.vibrate(duration: Long, amplitude: Int = 255) {
+    try {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? (VibratorManager))?.defaultVibrator
+        } else {
+            (this).getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createOneShot(duration, amplitude))
+        } else {
+            vibrator?.vibrate(duration)
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }
